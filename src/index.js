@@ -5,9 +5,7 @@ import { WEBGL } from "./webgl";
 
 class App extends Component {
 
-  componentDidMount() {
-    console.log(this.threeRootElement);
-    
+  componentDidMount() {    
     threeEntryPoint(this.threeRootElement);
   }
 

@@ -3,7 +3,7 @@ import { TweenMax, Expo } from "gsap";
 import { BokehDepthShader, BokehShader } from "./BokehShader";
 import * as dat from "dat.gui";
 
-export default canvas => {
+export default (canvas, innerWidth, innerHeight) => {
 
   const NUM_OF_PARTICLES = 2000;
   const CAMERA_TO_SCENE_DISTANCE_RATIO = 1.01;
@@ -35,8 +35,8 @@ export default canvas => {
   let effectController;
   
   const cubeDimensions = {
-    x: window.innerWidth,
-    y: window.innerHeight,
+    x: innerWidth,
+    y: innerHeight,
     z: 1500
   };
     
@@ -118,7 +118,6 @@ export default canvas => {
     renderer.setSize(cubeDimensions.x, cubeDimensions.y, false);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    // document.body.appendChild(renderer.domElement);
   
     //
   
@@ -193,8 +192,8 @@ export default canvas => {
   }
   
   function onDocumentMouseMove(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    mouse.x = (event.clientX / innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / innerHeight) * 2 + 1;
   }
   
   function randomInUnityRange() {
@@ -366,10 +365,10 @@ export default canvas => {
   function initPostprocessing() {
     postprocessing.scene = new THREE.Scene();
     postprocessing.camera = new THREE.OrthographicCamera(
-      window.innerWidth / -2,
-      window.innerWidth / 2,
-      window.innerHeight / 2,
-      window.innerHeight / -2,
+      innerWidth / -2,
+      innerWidth / 2,
+      innerHeight / 2,
+      innerHeight / -2,
       -10000,
       10000
     );
@@ -382,13 +381,13 @@ export default canvas => {
       format: THREE.RGBFormat
     };
     postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget(
-      window.innerWidth,
-      window.innerHeight,
+      innerWidth,
+      innerHeight,
       pars
     );
     postprocessing.rtTextureColor = new THREE.WebGLRenderTarget(
-      window.innerWidth,
-      window.innerHeight,
+      innerWidth,
+      innerHeight,
       pars
     );
   
@@ -401,8 +400,8 @@ export default canvas => {
       postprocessing.rtTextureColor.texture;
     postprocessing.bokeh_uniforms["tDepth"].value =
       postprocessing.rtTextureDepth.texture;
-    postprocessing.bokeh_uniforms["textureWidth"].value = window.innerWidth;
-    postprocessing.bokeh_uniforms["textureHeight"].value = window.innerHeight;
+    postprocessing.bokeh_uniforms["textureWidth"].value = innerWidth;
+    postprocessing.bokeh_uniforms["textureHeight"].value = innerHeight;
     postprocessing.materialBokeh = new THREE.ShaderMaterial({
       uniforms: postprocessing.bokeh_uniforms,
       vertexShader: bokeh_shader.vertexShader,
@@ -413,7 +412,7 @@ export default canvas => {
       }
     });
     postprocessing.quad = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(window.innerWidth, window.innerHeight),
+      new THREE.PlaneBufferGeometry(innerWidth, innerHeight),
       postprocessing.materialBokeh
     );
     postprocessing.quad.position.z = -500;
@@ -443,9 +442,9 @@ export default canvas => {
   }
 
   function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize( innerWidth, innerHeight );
   }
 
   return {
