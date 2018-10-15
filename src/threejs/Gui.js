@@ -1,7 +1,21 @@
 import * as dat from "dat.gui"
 
+let effectController = {
+  fstop: 2.2,
+  maxblur: 1.0,
+  focalDepth: 2.8,
+  vignetting: false,
+  depthblur: false,
+  threshold: 0.5,
+  gain: 2.0,
+  bias: 0.5,
+  fringe: 0.7,
+  focalLength: 35,
+  pentagon: false,
+  dithering: 0.0001
+}
+
 export default ({ 
-  effectController,
   postprocessing,
   camera,
   shaderSettings,

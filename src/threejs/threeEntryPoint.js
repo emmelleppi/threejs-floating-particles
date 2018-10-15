@@ -1,106 +1,62 @@
 import React from "react"
-
+import Listener from "./Listener";
 import SceneManager from './SceneManager'
 
 class ThreeEntryPoint extends React.Component{
   constructor(){
     super()
-    this.state = {}
-    this.canvas = null
-
+    this.canvasRef = React.createRef()
+    this.sceneRef = React.createRef()
+    this.eventsHandler = new Listener(document)
+    this.containerHandler = new Listener(this.props.container)
+    this.renderProcess = []
+    
+    this.resizeCanvas = this.resizeCanvas.bind(this)
     this.update = this.update.bind(this)
-    this.createCanvas = this.createCanvas.bind(this)
-
-    this.events = {
-      mousemove: null
-    }
+    this.addInUpdateProcess = this.addInUpdateProcess.bind(this)
   }
 
   componentDidMount(){
-    this.canvas = createCanvas(this.props.containerElement)
+    this.containerHandler.on('resize', this.resizeCanvas)
+    this.addInUpdateProcess(this.sceneRef.current.update)
     this.update()
   }
 
-  createCanvas(containerElement) {
-    this.canvas = document.createElement('canvas')
-    containerElement.appendChild(this.canvas)
-  }
-
-  on(event, callback, bubble) {
-    this.events[event].push(callback)
-  } 
-
-  off(event, callback) {
-
-    this.events[event].filter(ev => ev.callback !== callback)
-
-  }
-
-  handleMouseMove(e) {
-
-    this.events['marcello.mousemove'].forEach(ev => {
-      ev.callback(e)
-    })
-
-  } 
-
-  bindEventListeners() {
-    document.addEventListener("mousemove", sceneManager.onDocumentMouseMove, false)
-    document.addEventListener("mousedown", sceneManager.onDocumentMouseDown, false)
-    window.onresize = resizeCanvas
-    resizeCanvas()
-  }
-
   resizeCanvas() {
-    this.canvas.style.width = '100%'
-    this.canvas.style.height= '100%'
-    this.canvas.width = this.canvas.offsetWidth
-    this.canvas.height = this.canvas.offsetHeight
-    sceneManager.onWindowResize()
+    this.canvasRef.current.style.width = '100%'
+    this.canvasRef.current.style.height= '100%'
+    this.canvasRef.current.width = this.canvasRef.current.offsetWidth
+    this.canvasRef.current.height = this.canvasRef.current.offsetHeight
   }
 
   update() {
     requestAnimationFrame(update, false)
-    sceneManager.update()
+    for(let i=0; i<this.renderProcess.length; i++){
+      this.renderProcess[i]()
+    }
+  }
+
+  addInUpdateProcess(fn){
+    this.renderProcess.push(fn)
   }
 
   render(){
-
+    const { container } = this.props
+    return ( 
+      <React.Fragment>
+        <canvas ref={ this.canvasRef } ></canvas>
+        {
+          this.props.children({
+            container,
+            canvas: this.canvasRef,
+            eventsHandler: this.eventsHandler,
+            containerHandler: this.containerHandler,
+            addInUpdateProcess,
+          })
+        }
+      </React.Fragment>
+    )
   }
 }
 
-function createCanvas(document, containerElement) {
-  const canvas = document.createElement('canvas')
-  containerElement.appendChild(canvas)
-  return canvas
-}
-
-export default containerElement => {  
-  const canvas = createCanvas(document, containerElement)
-  const sceneManager = new SceneManager(canvas, window.innerWidth, window.innerHeight)
-
-  sceneManager.init()
-  bindEventListeners()
-  render()
-
-  function bindEventListeners() {
-    document.addEventListener("mousemove", sceneManager.onDocumentMouseMove, false)
-    document.addEventListener("mousedown", sceneManager.onDocumentMouseDown, false)
-    window.onresize = resizeCanvas
-    resizeCanvas()
-  }
-
-  function resizeCanvas() {
-    canvas.style.width = '100%'
-    canvas.style.height= '100%'
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
-    sceneManager.onWindowResize()
-  }
-
-  function render() {
-    requestAnimationFrame(render, false)
-    sceneManager.update()
-  }
-
-}
+export default ThreeEntryPoint

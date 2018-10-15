@@ -1,9 +1,29 @@
+import React from "react";
 import * as THREE from "three"
 import { randomInUnityRange } from "./utility/general"
 
 const NUM_OF_PARTICLES = 2000
 const SCALE_PARTICLES_VERTICES = 0.1
 
+class ParticlesManager extends React.Component{
+  constructor(props){
+    super(props)
+    const { numOfParticles, velocity } = props
+    this.state = {
+      numOfParticles: numOfParticles || 2000,
+      particlesScaleVelocity: velocity || 0.1
+    }
+
+  }
+
+  componentDidMount(){
+
+  }
+
+  render(){
+
+  }
+}
 
 export default ({
   cubeDimensions,
@@ -39,3 +59,4 @@ export default ({
 
 }
 
+export default ParticlesManager

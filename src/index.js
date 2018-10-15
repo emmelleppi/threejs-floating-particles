@@ -1,17 +1,33 @@
 import React, { Component } from 'react';
 import ReactDOM from "react-dom";
-import threeEntryPoint from './threejs/threeEntryPoint';
+import ThreeEntryPoint from './threejs/ThreeEntryPoint';
 import { WEBGL } from "./webgl";
+import SceneManager from './threejs/SceneManager';
 
 class App extends Component {
 
-  componentDidMount() {    
-    threeEntryPoint(this.threeRootElement);
-  }
-
   render () {    
     return WEBGL.isWebGLAvailable() 
-      ? <div ref={element => this.threeRootElement = element} />
+      ? <ThreeEntryPoint container={window} >
+        {
+          ({ container, canvas, eventsHandler, containerHandler, addInUpdateProcess, }) => (
+            <SceneManager
+              canvas = {canvas}
+              innerWidth = {container.innerWidth}
+              innerHeight = {container.innerHeight}
+              eventsHandler = {eventsHandler}
+              containerHandler = {containerHandler}
+              addInUpdateProcess = {addInUpdateProcess}
+            >
+            {
+              ({ camera, scene, renderer }) => (
+                <div></div>
+              )
+            }
+            </SceneManager>
+          )
+        }
+        </ThreeEntryPoint>
       : <React.Fragment>{ WEBGL.getWebGLErrorMessage() }</React.Fragment>
   }
 

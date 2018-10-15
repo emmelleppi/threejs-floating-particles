@@ -1,1 +1,1 @@
-export randomInUnityRange = () => Math.random() * 2 - 1
+export const randomInUnityRange = () => Math.random() * 2 - 1

@@ -1,13 +1,18 @@
 import * as THREE from "three"
 import { BokehDepthShader, BokehShader } from "./BokehShader"
 
+let shaderSettings = {
+  rings: 3,
+  samples: 4
+}
+
+
 export default ({ 
   materialDepth,
   camera,
   postprocessing,
   innerWidth,
   innerHeight,
-  shaderSettings,
 }) => {
 
   initShader()
