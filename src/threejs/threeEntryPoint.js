@@ -1,14 +1,12 @@
 import React from "react"
 import Listener from "./Listener";
-import SceneManager from './SceneManager'
 
 class ThreeEntryPoint extends React.Component{
   constructor(){
     super()
     this.canvasRef = React.createRef()
-    this.sceneRef = React.createRef()
     this.eventsHandler = new Listener(document)
-    this.containerHandler = new Listener(this.props.container)
+    this.containerHandler = new Listener(window)
     this.renderProcess = []
     
     this.resizeCanvas = this.resizeCanvas.bind(this)
@@ -17,8 +15,9 @@ class ThreeEntryPoint extends React.Component{
   }
 
   componentDidMount(){
+    console.log('ThreeEntryPoint did mount')
+
     this.containerHandler.on('resize', this.resizeCanvas)
-    this.addInUpdateProcess(this.sceneRef.current.update)
     this.update()
   }
 
@@ -30,7 +29,7 @@ class ThreeEntryPoint extends React.Component{
   }
 
   update() {
-    requestAnimationFrame(update, false)
+    requestAnimationFrame(this.update, false)
     for(let i=0; i<this.renderProcess.length; i++){
       this.renderProcess[i]()
     }
@@ -41,7 +40,10 @@ class ThreeEntryPoint extends React.Component{
   }
 
   render(){
+    console.log('ThreeEntryPoint render')
+
     const { container } = this.props
+    
     return ( 
       <React.Fragment>
         <canvas ref={ this.canvasRef } ></canvas>
@@ -51,7 +53,7 @@ class ThreeEntryPoint extends React.Component{
             canvas: this.canvasRef,
             eventsHandler: this.eventsHandler,
             containerHandler: this.containerHandler,
-            addInUpdateProcess,
+            addInUpdateProcess: this.addInUpdateProcess,
           })
         }
       </React.Fragment>

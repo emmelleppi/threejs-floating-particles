@@ -1,53 +1,95 @@
-import React from "react"
+import * as THREE from "three"
+
+import { randomInUnityRange } from "./utility/general";
+import { TRANSFORMATION_MATRICES, Z_BIAS, SCALE_PARTICLES_VELOCITY } from './utility/constants'
 
 const defaultState = {
-  position: {
-    x: 0,
-    y: 0,
-    z: 0,
-  },
-  vertices: {
-    x: 0,
-    y: 0,
-    z: 0,
-  },
+  position: new THREE.Vector3(0,0,0),
+  velocity: new THREE.Vector3(0,0,0),
   color: 0xFFFFFF,
+  emissive: 0x000000,
+  radius: 5,
+  segments: 16,
+  scaleVelocity: SCALE_PARTICLES_VELOCITY,
 }
 
-class Particle extends React.Component{
+const PROSPECTIVE_SCALING = 0.5
+
+class Particle {
   constructor(props){
-    super(props)
-    const { position, vertices, color } = props
+    const { color, cubeDimensions, scaleVelocity } = props
     this.state = {
       ...defaultState,
-      position,
-      vertices,
       color,
+      scaleVelocity,
     }
-    
+    this.mesh = null
+    this.cubeReference = null
+
+    this.setCubeReference(cubeDimensions)
+    this.create()
+
+    this.create = this.create.bind(this)
+    this.update = this.update.bind(this)
+    this.updateMesh = this.updateMesh.bind(this)
+    this.setCubeReference = this.setCubeReference.bind(this)
   }
 
-  componentDidMount(){
+  create(){
+    const { color, emissive, radius, segments } = this.state
+    const { x, y, z } = this.cubeReference
+    
     const material = new THREE.MeshLambertMaterial({
-      color: 0xffffff,
-      emissive: 0x000000
+      color,
+      emissive,
     })
-    const geometry = new THREE.CircleGeometry(5, 32)
-    const circle = new THREE.Mesh(geometry, material)
-    circle.position.x = (randomInUnityRange() * cubeDimensions.x) / 2
-    circle.position.y = (randomInUnityRange() * cubeDimensions.y) / 2
-    circle.position.z = Z_BIAS + Math.random() * cubeDimensions.z
-    circle.vertices = new THREE.Vector3(
+    const geometry = new THREE.CircleGeometry(radius, segments)
+    this.mesh = new THREE.Mesh(geometry, material)
+    
+    this.state.position = new THREE.Vector3(
+      randomInUnityRange() * x,
+      randomInUnityRange() * y,
+      Math.random() * z + Z_BIAS
+    )
+    this.state.velocity = new THREE.Vector3(
       randomInUnityRange(),
       randomInUnityRange(),
       randomInUnityRange()
-    ).multiplyScalar(SCALE_PARTICLES_VERTICES)
-    scene.add(circle)
+    ).multiplyScalar(this.state.scaleVelocity)
+
+    this.update()
   }
 
-  render(){
-
+  update(updateMesh=true){
+    const { position, velocity } = this.state
+    const { x, y, z } = position
+    const { x: xCube, y: yCube, z: zCube } = this.cubeReference
+    
+    if (Math.abs(x) > xCube) {
+      velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
+    }
+    else if (Math.abs(y) > yCube) {
+      velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_L )
+    }
+    else if (z - Z_BIAS > zCube) {
+      velocity.reflect( TRANSFORMATION_MATRICES.z_L )
+    }
+    else if (z - Z_BIAS <= 0) {
+      velocity.reflect( TRANSFORMATION_MATRICES.z_R )
+    }
+    position.add(velocity)
+    updateMesh && this.updateMesh()
   }
+
+  updateMesh(){
+    const { x, y, z } = this.state.position
+    this.mesh.position.set(x, y, z)
+  }
+
+  setCubeReference(cubeDimensions){
+    this.cubeReference = cubeDimensions.multiplyScalar(PROSPECTIVE_SCALING)
+  }
+
 }
 
 export default Particle

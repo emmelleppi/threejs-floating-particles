@@ -1,62 +1,52 @@
 import React from "react";
 import * as THREE from "three"
-import { randomInUnityRange } from "./utility/general"
 
-const NUM_OF_PARTICLES = 2000
-const SCALE_PARTICLES_VERTICES = 0.1
+import Particle from "./Particle"
+import { NUM_OF_PARTICLES, SCALE_PARTICLES_VELOCITY } from "./utility/constants"
+
+
+const deafultState = {
+  color: 0xFFFFFF,
+  numOfParticles: NUM_OF_PARTICLES,
+  scaleVelocity: SCALE_PARTICLES_VELOCITY,
+  cubeDimensions: new THREE.Vector3(0,0,0)
+}
 
 class ParticlesManager extends React.Component{
   constructor(props){
     super(props)
-    const { numOfParticles, velocity } = props
+    const { numOfParticles, scaleVelocity, cubeDimensions, color } = props
     this.state = {
-      numOfParticles: numOfParticles || 2000,
-      particlesScaleVelocity: velocity || 0.1
+      ...deafultState,
+      numOfParticles,
+      scaleVelocity,
+      cubeDimensions,
+      color,
     }
+    this.particles = []
 
+    this.update = this.update.bind(this)
   }
 
   componentDidMount(){
-
+    const { color, cubeDimensions, scaleVelocity } = this.state
+    for(let i = 0; i < this.state.numOfParticles; i++){
+      const particle = new Particle({ color, cubeDimensions, scaleVelocity })
+      this.particles.push(particle)
+      this.props.scene.add(particle.mesh)
+    }
+    this.props.addInUpdateProcess(this.update)
   }
 
-  render(){
-
-  }
-}
-
-export default ({
-  cubeDimensions,
-  Z_BIAS,
-  scene,
-  particles,
-}) => {
-
-  function createParticles(){
-    for (let i = 0; i < NUM_OF_PARTICLES; i++) {
-      const material = new THREE.MeshLambertMaterial({
-        color: 0xffffff,
-        emissive: 0x000000
-      })
-      const geometry = new THREE.CircleGeometry(5, 32)
-      const circle = new THREE.Mesh(geometry, material)
-      circle.position.x = (randomInUnityRange() * cubeDimensions.x) / 2
-      circle.position.y = (randomInUnityRange() * cubeDimensions.y) / 2
-      circle.position.z = Z_BIAS + Math.random() * cubeDimensions.z
-      circle.vertices = new THREE.Vector3(
-        randomInUnityRange(),
-        randomInUnityRange(),
-        randomInUnityRange()
-      ).multiplyScalar(SCALE_PARTICLES_VERTICES)
-      scene.add(circle)
-      particles.push(circle)
+  update(){
+    for(let i = 0; i < this.particles.length; i++ ){
+      this.particles[i].update(true)
     }
   }
 
-  return {
-    createParticles
+  render(){
+    return null
   }
-
 }
 
 export default ParticlesManager
