@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 
 export const CAMERA_TO_SCENE_DISTANCE_RATIO = 1.01
-export const CONTAINER_DEPTH = 1500
-export const Z_BIAS = 2000
-export const NUM_OF_PARTICLES = 2000
+export const CONTAINER_DEPTH = 500
+export const Z_BIAS = 250
+export const NUM_OF_PARTICLES = 1000
 export const SCALE_PARTICLES_VELOCITY = 0.1
 export const SCALE_POINT_LIGHT_VELOCITY = 1
 

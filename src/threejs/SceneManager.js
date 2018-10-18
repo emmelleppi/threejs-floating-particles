@@ -13,6 +13,7 @@ class SceneManager extends React.Component {
 
     const { innerWidth, innerHeight } = props.container
     this.state = {
+      canvasKey: 0,
       innerWidth,
       innerHeight,
       scene: null
@@ -23,7 +24,7 @@ class SceneManager extends React.Component {
       CONTAINER_DEPTH
     )
     this.cameraParams = {
-      fov: 45,
+      fov: 90,
       init: 1,
       end: (this.cubeDimensions.z + Z_BIAS) * CAMERA_TO_SCENE_DISTANCE_RATIO
     }
@@ -44,18 +45,15 @@ class SceneManager extends React.Component {
     this.resizeCanvas = this.resizeCanvas.bind(this)
     this.update = this.update.bind(this)
     this.addInUpdateProcess = this.addInUpdateProcess.bind(this)
-    this.createCanvas = this.createCanvas.bind(this)
   }
 
   componentDidMount() {    
-    this.createCanvas(this.threeRootElement)
     this.init()
     this.createCamera()
     this.createScene()
     this.createBackgroundWall()
 
     this.addInUpdateProcess(() => {
-      this.state.scene && console.log(this.state.scene.children)
       this.renderer.render(this.scene, this.camera)
     })
     this.containerHandler.on('resize', this.onWindowResize)
@@ -74,7 +72,7 @@ class SceneManager extends React.Component {
   init(){
     const { x, y } = this.cubeDimensions
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas.current, antialias: true })
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true })
     this.renderer.setPixelRatio(1)
     this.renderer.setSize( x, y, false )
     this.renderer.shadowMap.enabled = true
@@ -82,10 +80,10 @@ class SceneManager extends React.Component {
   }
 
   resizeCanvas() {
-    this.canvas.style.width = '100%'
-    this.canvas.style.height= '100%'
-    this.canvas.width = this.canvas.offsetWidth
-    this.canvas.height = this.canvas.offsetHeight
+    this.canvas.current.style.width = '100%'
+    this.canvas.current.style.height= '100%'
+    this.canvas.current.width = this.canvas.current.offsetWidth
+    this.canvas.current.height = this.canvas.current.offsetHeight
   }
 
   createCamera(){
@@ -101,8 +99,8 @@ class SceneManager extends React.Component {
       this.cameraParams.end,
     )
     
-    this.camera.position.set( 0, 0, z + Z_BIAS )
-
+    this.camera.position.set( 0, 0, this.cameraParams.end )
+    
     const onMouseMove = onDocumentMouseMove(innerWidth, innerHeight)
     this.eventsHandler.on('mousemove', e => this.handleCameraPositionOnMouseMove(onMouseMove(e)))
   }
@@ -110,7 +108,7 @@ class SceneManager extends React.Component {
   createScene(){
     const fog = {
       color: 0x004d5f,
-      density: 0.0025
+      density: 0.000025
     }
     this.scene = new THREE.Scene()
     this.camera.lookAt( this.scene.position )
@@ -123,7 +121,7 @@ class SceneManager extends React.Component {
 
   createBackgroundWall(){
     const { x, y } = this.cubeDimensions
-    const scaleFactor = 10
+    const scaleFactor = 2
     const color = 0x33717f
     const groundGeometry = new THREE.PlaneBufferGeometry(
       x * scaleFactor,
@@ -136,6 +134,7 @@ class SceneManager extends React.Component {
     const ground = new THREE.Mesh(groundGeometry, groundMaterial)
     ground.position.set( 0, 0, 0 )
     ground.receiveShadow = true
+    
     this.scene.add(ground)
   }
 
@@ -153,12 +152,12 @@ class SceneManager extends React.Component {
     this.camera.position.set(
       Math.atan(mouse.x * scaleX) * scaleY,
       Math.atan(-mouse.y * scaleX) * scaleY,
-      (this.cubeDimensions.z + Z_BIAS) * CAMERA_TO_SCENE_DISTANCE_RATIO
+      this.cameraParams.end
     )
     this.camera.updateMatrixWorld()
   }
 
-  update() {        
+  update() {               
     requestAnimationFrame(this.update, false)
     for(let i=0; i<this.renderProcess.length; i++){
       this.renderProcess[i]()
@@ -169,30 +168,29 @@ class SceneManager extends React.Component {
     this.renderProcess.push(fn)
   }
 
-  createCanvas(containerElement) {
-    this.canvas = document.createElement('canvas')
-    containerElement.appendChild(this.canvas)
-  }
-
   render(){  
     const { container } = this.props
-    const { scene } = this.state
-
+    const { scene, canvasKey} = this.state
+    
     return (
       <React.Fragment>
-      <div ref={element => this.threeRootElement = element} />
-      {scene ?
-        this.props.children({
-          container,
-          eventsHandler: this.eventsHandler,
-          containerHandler: this.containerHandler,
-          addInUpdateProcess: this.addInUpdateProcess,
-          camera: this.camera,
-          scene, 
-          renderer: this.renderer,
-          cubeDimensions: this.cubeDimensions,
-        }) : "loading"
-      }
+        <canvas 
+          key={canvasKey}
+          ref={element => this.canvas = element} 
+        />
+        {
+          scene ?
+          this.props.children({
+            container,
+            eventsHandler: this.eventsHandler,
+            containerHandler: this.containerHandler,
+            addInUpdateProcess: this.addInUpdateProcess,
+            camera: this.camera,
+            scene, 
+            renderer: this.renderer,
+            cubeDimensions: this.cubeDimensions,
+          }) : null
+        }
       </React.Fragment>
     )
   }

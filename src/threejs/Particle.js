@@ -6,29 +6,29 @@ import { TRANSFORMATION_MATRICES, Z_BIAS, SCALE_PARTICLES_VELOCITY } from './uti
 const defaultState = {
   position: new THREE.Vector3(0,0,0),
   velocity: new THREE.Vector3(0,0,0),
+  scaleFactor: new THREE.Vector3(0,0,0),
   color: 0xFFFFFF,
   emissive: 0x000000,
   radius: 5,
-  segments: 16,
+  segments: 32,
   scaleVelocity: SCALE_PARTICLES_VELOCITY,
 }
 
-const PROSPECTIVE_SCALING = 0.5
-
 class Particle {
   constructor(props){
-    const { color, cubeDimensions, scaleVelocity } = props
+    const { color, cubeDimensions, scaleVelocity, scaleFactor } = props
     this.state = {
       ...defaultState,
       color,
       scaleVelocity,
+      scaleFactor,
     }
     this.mesh = null
     this.cubeReference = null
 
     this.setCubeReference(cubeDimensions)
     this.create()
-
+    
     this.create = this.create.bind(this)
     this.update = this.update.bind(this)
     this.updateMesh = this.updateMesh.bind(this)
@@ -49,8 +49,9 @@ class Particle {
     this.state.position = new THREE.Vector3(
       randomInUnityRange() * x,
       randomInUnityRange() * y,
-      Math.random() * z + Z_BIAS
+      (Math.random() * z) + Z_BIAS
     )
+    
     this.state.velocity = new THREE.Vector3(
       randomInUnityRange(),
       randomInUnityRange(),
@@ -69,7 +70,7 @@ class Particle {
       velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
     }
     else if (Math.abs(y) > yCube) {
-      velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_L )
+      velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_R )
     }
     else if (z - Z_BIAS > zCube) {
       velocity.reflect( TRANSFORMATION_MATRICES.z_L )
@@ -82,14 +83,14 @@ class Particle {
   }
 
   updateMesh(){
-    const { x, y, z } = this.state.position
+    const { x, y, z } = this.state.position    
     this.mesh.position.set(x, y, z)
   }
 
   setCubeReference(cubeDimensions){
-    this.cubeReference = cubeDimensions.multiplyScalar(PROSPECTIVE_SCALING)
+    const cube = cubeDimensions.clone()
+    this.cubeReference = cube.multiply(this.state.scaleFactor)
   }
-
 }
 
 export default Particle

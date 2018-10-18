@@ -14,8 +14,6 @@ const defaultState = {
   zFlat: false,
 }
 
-const PROSPECTIVE_SCALING = 0.5
-
 class PointLight {
   constructor(props){
     const { color, cubeDimensions, scaleFactor, intensity, radius, zFlat, scaleVelocity } = props
@@ -42,15 +40,14 @@ class PointLight {
   }
 
   create(){
-    const { color, intensity, radius } = this.state
-    this.pointLight = new THREE.PointLight(color, intensity, radius)
+    const { color, intensity, radius } = this.state    
+    this.pointLight = new THREE.PointLight(color, intensity, radius, 1)
     this.state.position = this.initPosition(this.state.zFlat)
     this.state.velocity = this.initVelocity(this.state.zFlat)
     this.update()
   }
 
   initPosition(zFlat){
-    
     const { x, y, z } = this.cubeReference
     return new THREE.Vector3(
       randomInUnityRange() * x,
@@ -76,9 +73,9 @@ class PointLight {
       velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
     }
     else if (Math.abs(y) > yCube) {
-      velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_L )
+      velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_R )
     }
-    else if (this.state.zFlat){
+    else if (!this.state.zFlat){
       if (z - Z_BIAS > zCube) {
         velocity.reflect( TRANSFORMATION_MATRICES.z_L )
       }
@@ -91,17 +88,13 @@ class PointLight {
   }
 
   updatePointLight(){
-    const { x, y, z } = this.state.position
+    const { x, y, z } = this.state.position    
     this.pointLight.position.set(x, y, z)
   }
 
   setCubeReference(cubeDimensions){
-    const { x, y, z } = cubeDimensions 
-    this.cubeReference = {
-      x: x * PROSPECTIVE_SCALING,
-      y: y * PROSPECTIVE_SCALING,
-      z,
-    }
+    const cube = cubeDimensions.clone()
+    this.cubeReference = cube.multiply(this.state.scaleFactor)
   }
 }
 

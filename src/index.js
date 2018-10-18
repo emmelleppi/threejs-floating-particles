@@ -6,7 +6,7 @@ import SceneManager from './threejs/SceneManager'
 import ParticlesManager from './threejs/ParticlesManager'
 import SpotLight from './threejs/SpotLight'
 import PointLightsManager from './threejs/PointLightsManager'
-import { SCALE_POINT_LIGHT_VELOCITY, NUM_OF_PARTICLES, SCALE_PARTICLES_VELOCITY } from "./threejs/utility/constants";
+import { SCALE_POINT_LIGHT_VELOCITY, SCALE_PARTICLES_VELOCITY } from "./threejs/utility/constants";
 
 class App extends React.Component {
 
@@ -17,45 +17,45 @@ class App extends React.Component {
             ({ camera, scene, renderer, cubeDimensions, container, eventsHandler, containerHandler, addInUpdateProcess, }) => 
             (
               <React.Fragment>
-                <ParticlesManager 
-                  scene = {scene}
-                  addInUpdateProcess = {addInUpdateProcess}
-                  cubeDimensions = {cubeDimensions}
-                  numOfParticles = {3}
-                  scaleVelocity = {SCALE_PARTICLES_VELOCITY}
-                  cubeDimensions = {cubeDimensions}
-                  color = {0xFFFFFF}
+                <ParticlesManager
+                  scaleFactor={new THREE.Vector3(0.5,0.5,1)}
+                  scene={scene}
+                  addInUpdateProcess={addInUpdateProcess}
+                  numOfParticles={1000}
+                  scaleVelocity={SCALE_PARTICLES_VELOCITY}
+                  cubeDimensions={cubeDimensions}
+                  color={0xFFFFFF}
                 />
                 <SpotLight
-                  scene = {scene}
+                  scene={scene}
                   color={0x1b853a}
-                  intensity={0.8}
+                  intensity={1}
                   angle={1}
-                  penumbra={1}
+                  penumbra={0}
                   decay={1}
                   cubeDimensions={cubeDimensions}
                 />
                 <PointLightsManager
-                  scaleFactor = {new THREE.Vector3(1,1,1)}
-                  scaleVelocity = {SCALE_POINT_LIGHT_VELOCITY}
-                  scene = {scene}
+                  scaleFactor={new THREE.Vector3(0.5,0.5,1)}
+                  scaleVelocity={SCALE_POINT_LIGHT_VELOCITY}
+                  scene={scene}
                   cubeDimensions={cubeDimensions}
                   colors={[0xffffff, 0x1b853a, 0x03d4f, 0x106ec6, 0x33619b]}
-                  intensity={0.8}
-                  radius={2000}
+                  intensity={0.7}
+                  radius={750}
                   zFlat={false}
-                  addInUpdateProcess = {addInUpdateProcess}
+                  addInUpdateProcess={addInUpdateProcess}
                 />
                 <PointLightsManager
-                  scaleFactor = {new THREE.Vector3(1,1,1)}
-                  scaleVelocity = {SCALE_POINT_LIGHT_VELOCITY}
-                  scene = {scene}
+                  scaleFactor={new THREE.Vector3(1,1,0.5)}
+                  scaleVelocity={SCALE_POINT_LIGHT_VELOCITY}
+                  scene={scene}
                   cubeDimensions={cubeDimensions}
-                  colors={[0xffffff, 0xffffff, 0xffffff]}
-                  intensity={0.8}
-                  radius={2000}
+                  colors={[0xFFFFFF,0xFFFFFF,0xFFFFFF]}
+                  intensity={0.3}
+                  radius={3000}
                   zFlat={true}
-                  addInUpdateProcess = {addInUpdateProcess}
+                  addInUpdateProcess={addInUpdateProcess}
                 />
               </React.Fragment>
             )

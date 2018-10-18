@@ -15,13 +15,14 @@ const deafultState = {
 class ParticlesManager extends React.Component{
   constructor(props){
     super(props)
-    const { numOfParticles, scaleVelocity, cubeDimensions, color } = props
+    const { numOfParticles, scaleVelocity, cubeDimensions, color, scaleFactor } = props
     this.state = {
       ...deafultState,
       numOfParticles,
       scaleVelocity,
       cubeDimensions,
       color,
+      scaleFactor,
     }
     this.particles = []
 
@@ -29,9 +30,10 @@ class ParticlesManager extends React.Component{
   }
 
   componentDidMount(){
-    const { color, cubeDimensions, scaleVelocity } = this.state
+    const { color, cubeDimensions, scaleVelocity, scaleFactor } = this.state
+    
     for(let i = 0; i < this.state.numOfParticles; i++){
-      const particle = new Particle({ color, cubeDimensions, scaleVelocity })
+      const particle = new Particle({ color, cubeDimensions, scaleVelocity, scaleFactor })
       this.particles.push(particle)
       this.props.scene.add(particle.mesh)
     }
