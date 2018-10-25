@@ -1,8 +1,6 @@
 import React from 'react'
 import * as THREE from "three"
 
-import { Z_BIAS, CAMERA_TO_SCENE_DISTANCE_RATIO } from './utility/constants'
-
 const defaultState = {
   color : 0xFFFFFF,
   intensity : 1,
@@ -15,7 +13,7 @@ const defaultState = {
 class SpotLight extends React.Component {
   constructor(props){
     super(props)
-    const { color, intensity, angle, penumbra, decay, cubeDimensions } = props
+    const { color, intensity, angle, penumbra, decay } = props
     this.state = {
       ...defaultState,
       color,
@@ -24,18 +22,15 @@ class SpotLight extends React.Component {
       penumbra,
       decay,
     }
-    this.cubeDimensions = cubeDimensions
     this.frontLight = null
   }
 
   componentDidMount(){
     const { color, intensity, angle, distance, penumbra, decay } = this.state
     this.frontLight = new THREE.SpotLight(color, intensity, distance, angle, penumbra, decay)
-    this.frontLight.position.set(
-      0,
-      0,
-      (this.cubeDimensions.z + Z_BIAS) * 1.1 ,
-    )    
+    const position = new THREE.Vector3(0, 0, 0).unproject(this.props.camera)
+    const { x, y, z } = position
+    this.frontLight.position.set(x, y, z) 
     this.frontLight.castShadow = true
     this.props.scene.add(this.frontLight)
   }

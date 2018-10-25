@@ -4,7 +4,7 @@ import * as THREE from "three"
 import Listener from "./Listener";
 
 import { onDocumentMouseMove } from "./utility/events"
-import { CAMERA_TO_SCENE_DISTANCE_RATIO, CONTAINER_DEPTH, Z_BIAS } from "./utility/constants"
+import { CONTAINER_DEPTH } from "./utility/constants"
 
 class SceneManager extends React.Component {
 
@@ -18,21 +18,22 @@ class SceneManager extends React.Component {
       innerHeight,
       scene: null
     }
-    this.cubeDimensions = new THREE.Vector3(
-      this.state.innerWidth,
-      this.state.innerHeight,
-      CONTAINER_DEPTH
-    )
     this.cameraParams = {
-      fov: 90,
+      fov: 60,
       init: 1,
-      end: (this.cubeDimensions.z + Z_BIAS) * CAMERA_TO_SCENE_DISTANCE_RATIO
+      end: CONTAINER_DEPTH
     }
 
     this.camera = null
+    this.frustum = null
     this.scene = null
     this.renderer = null
     this.canvas = null
+    this.mouse = {
+      x: 0,
+      y: 0,
+    }
+    this.raycaster = null
 
     this.eventsHandler = new Listener(document)
     this.containerHandler = new Listener(window)
@@ -45,6 +46,8 @@ class SceneManager extends React.Component {
     this.resizeCanvas = this.resizeCanvas.bind(this)
     this.update = this.update.bind(this)
     this.addInUpdateProcess = this.addInUpdateProcess.bind(this)
+    this.initRaycaster = this.initRaycaster.bind(this)
+    this.getIntersectedObject = this.getIntersectedObject.bind(this)
   }
 
   componentDidMount() {    
@@ -52,6 +55,7 @@ class SceneManager extends React.Component {
     this.createCamera()
     this.createScene()
     this.createBackgroundWall()
+    this.initRaycaster()
 
     this.addInUpdateProcess(() => {
       this.renderer.render(this.scene, this.camera)
@@ -70,11 +74,11 @@ class SceneManager extends React.Component {
   }
 
   init(){
-    const { x, y } = this.cubeDimensions
+    const { innerWidth, innerHeight } = this.state
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true })
     this.renderer.setPixelRatio(1)
-    this.renderer.setSize( x, y, false )
+    this.renderer.setSize( innerWidth, innerHeight, false )
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
   }
@@ -88,9 +92,8 @@ class SceneManager extends React.Component {
 
   createCamera(){
     const { innerWidth, innerHeight } = this.state
-    const { x, y, z } = this.cubeDimensions
 
-    const screenRatio = x / y
+    const screenRatio = innerWidth / innerHeight
     
     this.camera = new THREE.PerspectiveCamera(
       this.cameraParams.fov,
@@ -100,9 +103,20 @@ class SceneManager extends React.Component {
     )
     
     this.camera.position.set( 0, 0, this.cameraParams.end )
-    
+    this.camera.updateMatrix()
+    this.camera.updateMatrixWorld()
+    this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
+
+    this.frustum = new THREE.Frustum()
+    const cameraViewProjectionMatrix = new THREE.Matrix4()
+    cameraViewProjectionMatrix.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse )
+    this.frustum.setFromMatrix( cameraViewProjectionMatrix )
+      
     const onMouseMove = onDocumentMouseMove(innerWidth, innerHeight)
-    this.eventsHandler.on('mousemove', e => this.handleCameraPositionOnMouseMove(onMouseMove(e)))
+    this.eventsHandler.on('mousemove', e => {
+      this.mouse = onMouseMove(e)
+      this.handleCameraPositionOnMouseMove(this.mouse)
+    })
   }
   
   createScene(){
@@ -120,12 +134,12 @@ class SceneManager extends React.Component {
   }
 
   createBackgroundWall(){
-    const { x, y } = this.cubeDimensions
-    const scaleFactor = 2
+    const { innerWidth, innerHeight } = this.state
+    const scaleFactor = 10
     const color = 0x33717f
     const groundGeometry = new THREE.PlaneBufferGeometry(
-      x * scaleFactor,
-      y * scaleFactor
+      innerWidth * scaleFactor,
+      innerHeight * scaleFactor
     )
     const groundMaterial = new THREE.MeshPhongMaterial({
       color,
@@ -138,6 +152,15 @@ class SceneManager extends React.Component {
     this.scene.add(ground)
   }
 
+  initRaycaster(){
+      this.raycaster = new THREE.Raycaster();
+  }
+
+  getIntersectedObject(elements){
+    this.raycaster.setFromCamera(this.mouse, this.camera)
+    return this.raycaster.intersectObjects(elements)
+  }
+
   onWindowResize(e) {
     const { innerWidth, innerHeight } = e.target
     this.setState({
@@ -147,14 +170,14 @@ class SceneManager extends React.Component {
   }
 
   handleCameraPositionOnMouseMove(mouse) {
-    const scaleX = 1 / 10
-    const scaleY = 20
-    this.camera.position.set(
-      Math.atan(mouse.x * scaleX) * scaleY,
-      Math.atan(-mouse.y * scaleX) * scaleY,
-      this.cameraParams.end
-    )
-    this.camera.updateMatrixWorld()
+    // const scaleX = 1 / 10
+    // const scaleY = 20
+    // this.camera.position.set(
+    //   Math.atan(mouse.x * scaleX) * scaleY,
+    //   Math.atan(-mouse.y * scaleX) * scaleY,
+    //   this.cameraParams.end
+    // )
+    //this.camera.updateMatrixWorld()
   }
 
   update() {               
@@ -186,18 +209,17 @@ class SceneManager extends React.Component {
             containerHandler: this.containerHandler,
             addInUpdateProcess: this.addInUpdateProcess,
             camera: this.camera,
+            frustum: this.frustum,
             scene, 
             renderer: this.renderer,
-            cubeDimensions: this.cubeDimensions,
+            raycast: this.getIntersectedObject,
           }) : null
         }
       </React.Fragment>
     )
   }
   
-  // update() {
-  //   raycasterManager.handleRaycasterOnParticles()
-  
+  // update() {  
   //   renderer.clear()
   //   renderer.render(scene, camera, postprocessing.rtTextureColor, true)
   //   scene.overrideMaterial = materialDepth

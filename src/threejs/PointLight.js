@@ -1,7 +1,7 @@
 import * as THREE from "three"
 
 import { randomInUnityRange } from './utility/general'
-import { SCALE_POINT_LIGHT_VELOCITY, TRANSFORMATION_MATRICES, Z_BIAS } from './utility/constants'
+import { SCALE_POINT_LIGHT_VELOCITY, TRANSFORMATION_MATRICES } from './utility/constants'
 
 const defaultState = {
   position: new THREE.Vector3(0,0,0),
@@ -16,7 +16,7 @@ const defaultState = {
 
 class PointLight {
   constructor(props){
-    const { color, cubeDimensions, scaleFactor, intensity, radius, zFlat, scaleVelocity } = props
+    const { color, scaleFactor, intensity, radius, zFlat, scaleVelocity, camera, frustum } = props
     this.state = {
       ...defaultState,
       color,
@@ -27,9 +27,8 @@ class PointLight {
       zFlat,
     }
     this.pointLight = null
-    this.cubeReference = null
-
-    this.setCubeReference(cubeDimensions)
+    this.camera = camera
+    this.frustum = frustum
     this.create()
 
     this.create = this.create.bind(this)
@@ -48,54 +47,51 @@ class PointLight {
   }
 
   initPosition(zFlat){
-    const { x, y, z } = this.cubeReference
     return new THREE.Vector3(
-      randomInUnityRange() * x,
-      randomInUnityRange() * y,
-      zFlat ? Z_BIAS : Math.random() * z + Z_BIAS
-    ).multiply(this.state.scaleFactor)
+      randomInUnityRange(),
+      randomInUnityRange(),
+      zFlat ? 1 : ( 0.9999 - Math.exp( -Math.random() * 20 / 1 ) * 0.01 )
+    )
   }
 
   initVelocity(zFlat){
     return new THREE.Vector3(
       randomInUnityRange(),
       randomInUnityRange(),
-      zFlat ? 0 : randomInUnityRange()
+      zFlat ? 0 : randomInUnityRange()/100
     ).multiplyScalar(this.state.scaleVelocity)
   }
 
-  update(updatePointLight=true){
+  update(){
     const { position, velocity } = this.state
     const { x, y, z } = position
-    const { x: xCube, y: yCube, z: zCube } = this.cubeReference
     
-    if (Math.abs(x) > xCube) {
+    // if(!this.frustum.intersectsObject( this.pointLight )){}
+    if (Math.abs(x) > 1.05) {
       velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
     }
-    else if (Math.abs(y) > yCube) {
+    else if (Math.abs(y) > 1.05) {
       velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_R )
     }
     else if (!this.state.zFlat){
-      if (z - Z_BIAS > zCube) {
+      if (z > 0.999) {
         velocity.reflect( TRANSFORMATION_MATRICES.z_L )
       }
-      else if (z - Z_BIAS <= 0) {
+      else if (z <= 0.98) {
         velocity.reflect( TRANSFORMATION_MATRICES.z_R )
       }
     }
     position.add(velocity)
-    updatePointLight && this.updatePointLight()
+    this.updatePointLight()
   }
 
   updatePointLight(){
-    const { x, y, z } = this.state.position    
+    const unprojPosition = this.state.position.clone()
+    unprojPosition.unproject(this.camera)
+    const { x, y, z } = unprojPosition
     this.pointLight.position.set(x, y, z)
   }
 
-  setCubeReference(cubeDimensions){
-    const cube = cubeDimensions.clone()
-    this.cubeReference = cube.multiply(this.state.scaleFactor)
-  }
 }
 
 export default PointLight

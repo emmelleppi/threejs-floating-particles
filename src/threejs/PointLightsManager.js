@@ -8,7 +8,6 @@ const deafultState = {
   scaleFactor: new THREE.Vector3(1,1,1),
   scaleVelocity: SCALE_PARTICLES_VELOCITY,
   colors: [],
-  cubeDimensions: new THREE.Vector3(0,0,0),
   intensity: 1,
   radius: 1000,
   zFlat: false,
@@ -17,25 +16,26 @@ const deafultState = {
 class PointLightsManager extends React.Component {
   constructor(props){
     super(props)
-    const { scaleFactor, scaleVelocity, cubeDimensions, colors, intensity, radius, zFlat } = props
+    const { scaleFactor, scaleVelocity, colors, intensity, radius, zFlat, frustum, camera } = props
     this.state = {
       ...deafultState,
       scaleFactor,
       scaleVelocity,
-      cubeDimensions,
       intensity,
       radius,
       zFlat,
     }
     this.colors = colors || []
     this.lights = []
+    this.camera = camera
+    this.frustum = frustum
 
     this.update = this.update.bind(this)
   }
 
   componentDidMount(){
     for(let i = 0; i < this.colors.length; i++){
-      const pointLight =  new PointLight({ ...this.state, color: this.colors[i] })
+      const pointLight =  new PointLight({ ...this.state, color: this.colors[i], camera: this.camera, frustum: this.frustum  })
       this.lights.push(pointLight)
       this.props.scene.add(pointLight.pointLight)
     }
