@@ -14,7 +14,7 @@ const deafultState = {
 class ParticlesManager extends React.Component{
   constructor(props){
     super(props)
-    const { numOfParticles, scaleVelocity, color, scaleFactor, camera, frustum } = props    
+    const { numOfParticles, scaleVelocity, color, scaleFactor, camera, fakeCamera, frustum } = props    
     this.state = {
       ...deafultState,
       numOfParticles,
@@ -26,6 +26,7 @@ class ParticlesManager extends React.Component{
     this.particlesMesh = []
     this.clickedParticles = []
     this.camera = camera
+    this.fakeCamera = fakeCamera
     this.frustum = frustum
 
     this.intersected = {
@@ -43,7 +44,7 @@ class ParticlesManager extends React.Component{
     const { color,  scaleVelocity, scaleFactor } = this.state
     
     for(let i = 0; i < this.state.numOfParticles; i++){
-      const particle = new Particle({ color, scaleVelocity, scaleFactor, camera: this.camera, frustum: this.frustum })
+      const particle = new Particle({ color, scaleVelocity, scaleFactor, camera: this.camera, frustum: this.frustum, fakeCamera: this.fakeCamera })
       this.particles.push(particle)
       this.particlesMesh.push(particle.mesh)
       this.props.scene.add(particle.mesh)
@@ -72,7 +73,7 @@ class ParticlesManager extends React.Component{
           this.intersected.object = intersects[0].object
           let { object, currentHex } = this.intersected
           currentHex = object.material.emissive.getHex()
-          object.material.emissive.setHex(0xff0000)
+          object.material.emissive.setHex(0x222222)
         }
       } else {
         if (this.intersected.object) {

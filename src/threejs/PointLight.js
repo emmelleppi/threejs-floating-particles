@@ -6,7 +6,6 @@ import { SCALE_POINT_LIGHT_VELOCITY, TRANSFORMATION_MATRICES } from './utility/c
 const defaultState = {
   position: new THREE.Vector3(0,0,0),
   velocity: new THREE.Vector3(0,0,0),
-  scaleFactor: new THREE.Vector3(1,1,1),
   scaleVelocity: SCALE_POINT_LIGHT_VELOCITY,
   color: 0xFFFFFF,
   intensity: 1,
@@ -16,11 +15,10 @@ const defaultState = {
 
 class PointLight {
   constructor(props){
-    const { color, scaleFactor, intensity, radius, zFlat, scaleVelocity, camera, frustum } = props
+    const { color, intensity, radius, zFlat, scaleVelocity, camera, frustum } = props
     this.state = {
       ...defaultState,
       color,
-      scaleFactor,
       scaleVelocity,
       intensity,
       radius,
@@ -29,6 +27,8 @@ class PointLight {
     this.pointLight = null
     this.camera = camera
     this.frustum = frustum
+    this.outOfTheFrustum = false
+
     this.create()
 
     this.create = this.create.bind(this)
@@ -44,13 +44,15 @@ class PointLight {
     this.state.position = this.initPosition(this.state.zFlat)
     this.state.velocity = this.initVelocity(this.state.zFlat)
     this.update()
+    console.log(this.pointLight);
+    
   }
 
   initPosition(zFlat){
     return new THREE.Vector3(
       randomInUnityRange(),
       randomInUnityRange(),
-      zFlat ? 1 : ( 0.9999 - Math.exp( -Math.random() * 20 / 1 ) * 0.01 )
+      zFlat ? 1 : ( 0.999 - Math.exp( -Math.random() * 20 ) * 0.01 )
     )
   }
 
@@ -58,7 +60,7 @@ class PointLight {
     return new THREE.Vector3(
       randomInUnityRange(),
       randomInUnityRange(),
-      zFlat ? 0 : randomInUnityRange()/100
+      zFlat ? 0 : randomInUnityRange()/1000
     ).multiplyScalar(this.state.scaleVelocity)
   }
 
@@ -66,20 +68,27 @@ class PointLight {
     const { position, velocity } = this.state
     const { x, y, z } = position
     
-    // if(!this.frustum.intersectsObject( this.pointLight )){}
-    if (Math.abs(x) > 1.05) {
-      velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
-    }
-    else if (Math.abs(y) > 1.05) {
-      velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_R )
-    }
-    else if (!this.state.zFlat){
-      if (z > 0.999) {
-        velocity.reflect( TRANSFORMATION_MATRICES.z_L )
+    if(!this.frustum.containsPoint( this.pointLight.position ) && !this.outOfTheFrustum){
+      if (Math.abs(x) > 1.05) {
+        velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
+        this.outOfTheFrustum = true
       }
-      else if (z <= 0.98) {
-        velocity.reflect( TRANSFORMATION_MATRICES.z_R )
+      else if (Math.abs(y) > 1.05) {
+        velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_R )
+        this.outOfTheFrustum = true
       }
+      else if (!this.state.zFlat){
+        if (z >= 1) {
+          velocity.reflect( TRANSFORMATION_MATRICES.z_L )
+          this.outOfTheFrustum = true
+        }
+        else if (z <= 0.95) {
+          velocity.reflect( TRANSFORMATION_MATRICES.z_R )
+          this.outOfTheFrustum = true
+        }
+      }
+    } else {
+      this.outOfTheFrustum = false
     }
     position.add(velocity)
     this.updatePointLight()

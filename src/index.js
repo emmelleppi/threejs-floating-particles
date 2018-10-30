@@ -16,7 +16,7 @@ class App extends React.Component {
     return WEBGL.isWebGLAvailable() 
       ?  <SceneManager container={window} >
           {
-            ({ frustum, camera, scene, renderer, container, eventsHandler, containerHandler, addInUpdateProcess, raycast }) => 
+            ({ frustum, frustumNormals, camera, fakeCamera, scene, renderer, container, eventsHandler, containerHandler, addInUpdateProcess, raycast }) => 
             (
               <React.Fragment>
                 <ParticlesManager
@@ -29,7 +29,9 @@ class App extends React.Component {
                   raycast={raycast}
                   eventsHandler={eventsHandler}
                   camera={camera}
+                  fakeCamera={fakeCamera}
                   frustum={frustum}
+                  frustumNormals={frustumNormals}
                 />
                 <SpotLight
                   scene={scene}
@@ -49,7 +51,7 @@ class App extends React.Component {
                   frustum={frustum}
                   colors={[0xffffff, 0x1b853a, 0x03d4f, 0x106ec6, 0x33619b]}
                   intensity={0.5}
-                  radius={1500}
+                  radius={4000}
                   zFlat={false}
                   addInUpdateProcess={addInUpdateProcess}
                 />

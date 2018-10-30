@@ -18,7 +18,7 @@ const defaultState = {
 
 class Particle {
   constructor(props){
-    const { color, scaleVelocity, scaleFactor, camera, frustum } = props
+    const { color, scaleVelocity, scaleFactor, camera, fakeCamera, frustum } = props
     this.state = {
       ...defaultState,
       color,
@@ -29,7 +29,10 @@ class Particle {
     this.id = null
     this.updateFlag = true
     this.camera = camera
+    this.fakeCamera = fakeCamera
     this.frustum = frustum
+
+    this.outOfTheFrustum = false
 
     this.create()
     
@@ -39,6 +42,7 @@ class Particle {
     this.startMovement = this.startMovement.bind(this)
     this.stopMovement = this.stopMovement.bind(this)
     this.onClick = this.onClick.bind(this)
+    this.addVelocity = this.addVelocity.bind(this)
   }
 
   create(){
@@ -51,11 +55,11 @@ class Particle {
     const geometry = new THREE.CircleGeometry(radius, segments)
     this.mesh = new THREE.Mesh(geometry, material)
     this.id = this.mesh.uuid
-
+    
     this.state.position = new THREE.Vector3(
       randomInUnityRange(),
       randomInUnityRange(),
-      ( 0.9999 - Math.exp( -Math.random() * 20 / 1 ) * 0.01 )
+      ( 0.9999 - Math.exp( -Math.random() * 20 ) * 0.015 )
     )
    
     this.state.velocity = new THREE.Vector3(
@@ -71,27 +75,40 @@ class Particle {
     const { position, velocity } = this.state
     const { x, y, z } = position    
     
-    if(!this.frustum.intersectsObject( this.mesh )){
+    if(!this.frustum.containsPoint( this.mesh.position ) && !this.outOfTheFrustum){
       if (Math.abs(x) > 1.05) {
         velocity.reflect( x > 0 ? TRANSFORMATION_MATRICES.x_L : TRANSFORMATION_MATRICES.x_R )
+        this.outOfTheFrustum = true
       }
       else if (Math.abs(y) > 1.05) {
         velocity.reflect( y > 0 ? TRANSFORMATION_MATRICES.y_L : TRANSFORMATION_MATRICES.y_R )
+        this.outOfTheFrustum = true
       }
-      else if (z > 0.999) {
+      else if (z >= 1) {
         velocity.reflect( TRANSFORMATION_MATRICES.z_L )
+        this.outOfTheFrustum = true
       }
       else if (z <= 0.98) {
         velocity.reflect( TRANSFORMATION_MATRICES.z_R )
+        this.outOfTheFrustum = true
       }
+    } else {
+      this.outOfTheFrustum = false
     }
-    this.updateFlag && position.add(velocity)
+    this.updateFlag && position.add(this.addVelocity(position,velocity))
     this.updateMesh()
+  }
+
+  addVelocity(position, velocity){
+    const { x: vx, y: vy, z: vz } = velocity
+    const { z } = position
+    const scaleZ = 1 - ((z - 0.98) / 0.02 )
+    return { x: vx, y: vy, z: vz * scaleZ }
   }
 
   updateMesh(){
     const unprojPosition = this.state.position.clone()
-    unprojPosition.unproject(this.camera)
+    unprojPosition.unproject(this.fakeCamera)
     const { x, y, z } = unprojPosition
     this.mesh.position.set(x, y, z)
   }

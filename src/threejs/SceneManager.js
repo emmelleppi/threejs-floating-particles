@@ -25,6 +25,7 @@ class SceneManager extends React.Component {
     }
 
     this.camera = null
+    this.fakeCamera = null
     this.frustum = null
     this.scene = null
     this.renderer = null
@@ -48,6 +49,7 @@ class SceneManager extends React.Component {
     this.addInUpdateProcess = this.addInUpdateProcess.bind(this)
     this.initRaycaster = this.initRaycaster.bind(this)
     this.getIntersectedObject = this.getIntersectedObject.bind(this)
+    this.onWindowResize = this.onWindowResize.bind(this)
   }
 
   componentDidMount() {    
@@ -61,15 +63,14 @@ class SceneManager extends React.Component {
       this.renderer.render(this.scene, this.camera)
     })
     this.containerHandler.on('resize', this.onWindowResize)
-    this.containerHandler.on('resize', this.resizeCanvas)
 
     this.update()
   }
 
   componentDidUpdate(){
     const { innerWidth, innerHeight } = this.state
-    this.camera.aspect = innerWidth / innerHeight
-    this.camera.updateProjectionMatrix()
+    this.fakeCamera.aspect = innerWidth / innerHeight
+    this.fakeCamera.updateProjectionMatrix()
     this.renderer.setSize( innerWidth, innerHeight )
   }
 
@@ -84,10 +85,16 @@ class SceneManager extends React.Component {
   }
 
   resizeCanvas() {
-    this.canvas.current.style.width = '100%'
-    this.canvas.current.style.height= '100%'
-    this.canvas.current.width = this.canvas.current.offsetWidth
-    this.canvas.current.height = this.canvas.current.offsetHeight
+    const { innerWidth, innerHeight } = this.state
+
+    this.canvas.style.width = '100%'
+    this.canvas.style.height= '100%'
+    this.canvas.width = this.canvas.offsetWidth
+    this.canvas.height = this.canvas.offsetHeight
+    
+    this.camera.aspect = innerWidth / innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize( innerWidth, innerHeight );
   }
 
   createCamera(){
@@ -95,22 +102,31 @@ class SceneManager extends React.Component {
 
     const screenRatio = innerWidth / innerHeight
     
+    this.fakeCamera = new THREE.PerspectiveCamera(
+      this.cameraParams.fov,
+      screenRatio,
+      this.cameraParams.init,
+      this.cameraParams.end,
+    )
+    this.fakeCamera.position.set( 0, 0, this.cameraParams.end )
+    this.fakeCamera.updateMatrix()
+    this.fakeCamera.updateMatrixWorld()
+    this.fakeCamera.matrixWorldInverse.getInverse( this.fakeCamera.matrixWorld );
+    
     this.camera = new THREE.PerspectiveCamera(
       this.cameraParams.fov,
       screenRatio,
       this.cameraParams.init,
       this.cameraParams.end,
     )
-    
-    this.camera.position.set( 0, 0, this.cameraParams.end )
-    this.camera.updateMatrix()
-    this.camera.updateMatrixWorld()
-    this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld );
+    this.camera.position.set( 0, 0, CONTAINER_DEPTH )
 
     this.frustum = new THREE.Frustum()
+    
     const cameraViewProjectionMatrix = new THREE.Matrix4()
-    cameraViewProjectionMatrix.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse )
+    cameraViewProjectionMatrix.multiplyMatrices( this.fakeCamera.projectionMatrix, this.fakeCamera.matrixWorldInverse )
     this.frustum.setFromMatrix( cameraViewProjectionMatrix )
+    this.frustum.planes.forEach(plane => plane.normal.multiplyScalar(-1))
       
     const onMouseMove = onDocumentMouseMove(innerWidth, innerHeight)
     this.eventsHandler.on('mousemove', e => {
@@ -125,7 +141,7 @@ class SceneManager extends React.Component {
       density: 0.000025
     }
     this.scene = new THREE.Scene()
-    this.camera.lookAt( this.scene.position )
+    this.fakeCamera.lookAt( this.scene.position )
     this.scene.fog = new THREE.FogExp2(fog.color, fog.density)
 
     this.setState({
@@ -157,7 +173,7 @@ class SceneManager extends React.Component {
   }
 
   getIntersectedObject(elements){
-    this.raycaster.setFromCamera(this.mouse, this.camera)
+    this.raycaster.setFromCamera(this.mouse, this.fakeCamera)
     return this.raycaster.intersectObjects(elements)
   }
 
@@ -166,18 +182,18 @@ class SceneManager extends React.Component {
     this.setState({
       innerWidth,
       innerHeight,
-    })
+    }, this.resizeCanvas)
   }
 
   handleCameraPositionOnMouseMove(mouse) {
-    // const scaleX = 1 / 10
-    // const scaleY = 20
-    // this.camera.position.set(
-    //   Math.atan(mouse.x * scaleX) * scaleY,
-    //   Math.atan(-mouse.y * scaleX) * scaleY,
-    //   this.cameraParams.end
-    // )
-    //this.camera.updateMatrixWorld()
+    const scaleX = 1 / 10
+    const scaleY = 20
+    this.camera.position.set(
+      Math.atan(mouse.x * scaleX) * scaleY,
+      Math.atan(-mouse.y * scaleX) * scaleY,
+      this.cameraParams.end
+    )
+    this.camera.updateMatrixWorld()
   }
 
   update() {               
@@ -209,6 +225,7 @@ class SceneManager extends React.Component {
             containerHandler: this.containerHandler,
             addInUpdateProcess: this.addInUpdateProcess,
             camera: this.camera,
+            fakeCamera: this.fakeCamera,
             frustum: this.frustum,
             scene, 
             renderer: this.renderer,
