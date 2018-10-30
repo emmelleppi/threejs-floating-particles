@@ -1,9 +1,8 @@
 import React from "react";
-import * as THREE from "three"
+import Worker from 'worker-loader!./particleWebWorker.js';
 
 import Particle from "./Particle"
 import { NUM_OF_PARTICLES, SCALE_PARTICLES_VELOCITY, MAX_NUMBER_OF_OPEN_PARICLES } from "./utility/constants"
-
 
 const deafultState = {
   color: 0xFFFFFF,
@@ -29,6 +28,14 @@ class ParticlesManager extends React.Component{
     this.fakeCamera = fakeCamera
     this.frustum = frustum
 
+    this.particlesWorker = new Worker()
+    this.particlesWorker.addEventListener(
+      'message', 
+      e => console.log(e), 
+      false
+    )
+    this.particlesWorker.postMessage({ ciao: 'diocane' })
+
     this.intersected = {
       object: null,
       currentHex: null,
@@ -44,7 +51,15 @@ class ParticlesManager extends React.Component{
     const { color,  scaleVelocity, scaleFactor } = this.state
     
     for(let i = 0; i < this.state.numOfParticles; i++){
-      const particle = new Particle({ color, scaleVelocity, scaleFactor, camera: this.camera, frustum: this.frustum, fakeCamera: this.fakeCamera })
+      const particle = new Particle({ 
+        color, 
+        scaleVelocity, 
+        scaleFactor, 
+        camera: this.camera, 
+        frustum: this.frustum, 
+        fakeCamera: this.fakeCamera,
+        worker: this.particlesWorker,
+      })
       this.particles.push(particle)
       this.particlesMesh.push(particle.mesh)
       this.props.scene.add(particle.mesh)
