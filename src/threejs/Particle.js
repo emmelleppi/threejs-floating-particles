@@ -18,7 +18,7 @@ const defaultState = {
 
 class Particle {
   constructor(props){
-    const { color, scaleVelocity, scaleFactor, camera, fakeCamera, frustum, worker } = props
+    const { color, scaleVelocity, scaleFactor, camera, fakeCamera, frustum } = props
     this.state = {
       ...defaultState,
       color,
@@ -31,7 +31,6 @@ class Particle {
     this.camera = camera
     this.fakeCamera = fakeCamera
     this.frustum = frustum
-    this.worker = worker
     
     this.outOfTheFrustum = false
 
@@ -73,7 +72,6 @@ class Particle {
   }
 
   update(){
-    this.worker.postMessage("diocane") 
     const { position, velocity } = this.state
     const { x, y, z } = position    
     

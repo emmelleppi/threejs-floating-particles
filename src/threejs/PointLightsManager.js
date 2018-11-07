@@ -16,11 +16,10 @@ const deafultState = {
 class PointLightsManager extends React.Component {
   constructor(props){
     super(props)
-    const { scaleFactor, scaleVelocity, colors, intensity, radius, zFlat, frustum, camera } = props
+    const { scaleFactor, colors, intensity, radius, zFlat, frustum, camera } = props
     this.state = {
       ...deafultState,
       scaleFactor,
-      scaleVelocity,
       intensity,
       radius,
       zFlat,

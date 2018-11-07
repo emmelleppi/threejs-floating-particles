@@ -119,7 +119,7 @@ class SceneManager extends React.Component {
       this.cameraParams.init,
       this.cameraParams.end,
     )
-    this.camera.position.set( 0, 0, CONTAINER_DEPTH )
+    this.camera.position.set( 0, 0, this.cameraParams.end )
 
     this.frustum = new THREE.Frustum()
     

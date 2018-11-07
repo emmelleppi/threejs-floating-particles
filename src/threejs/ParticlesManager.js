@@ -1,6 +1,6 @@
-import React from "react";
-import Worker from 'worker-loader!./particleWebWorker.js';
-
+import React from "react"
+import worker from './worker'
+import WebWorker from "./WebWorker"
 import Particle from "./Particle"
 import { NUM_OF_PARTICLES, SCALE_PARTICLES_VELOCITY, MAX_NUMBER_OF_OPEN_PARICLES } from "./utility/constants"
 
@@ -13,12 +13,9 @@ const deafultState = {
 class ParticlesManager extends React.Component{
   constructor(props){
     super(props)
-    const { numOfParticles, scaleVelocity, color, scaleFactor, camera, fakeCamera, frustum } = props    
+    const { scaleFactor, camera, fakeCamera, frustum } = props    
     this.state = {
       ...deafultState,
-      numOfParticles,
-      scaleVelocity,
-      color,
       scaleFactor,
     }
     this.particles = []
@@ -27,14 +24,7 @@ class ParticlesManager extends React.Component{
     this.camera = camera
     this.fakeCamera = fakeCamera
     this.frustum = frustum
-
-    this.particlesWorker = new Worker()
-    this.particlesWorker.addEventListener(
-      'message', 
-      e => console.log(e), 
-      false
-    )
-    this.particlesWorker.postMessage({ ciao: 'diocane' })
+    this.worker = null
 
     this.intersected = {
       object: null,
@@ -67,9 +57,18 @@ class ParticlesManager extends React.Component{
     this.props.addInUpdateProcess(this.update)
     this.props.addInUpdateProcess(this.handleRaycasterOnParticles)
     this.props.eventsHandler.on('mousedown',this.onDocumentMouseDown)
+
+    if(window.Worker){
+      this.worker = new WebWorker(worker)
+      this.worker.onmessage = event => {
+          // console.log(event)
+      }
+    }
+
   }
 
-  update(){    
+  update(){
+    this.worker.postMessage('prova')  
     for(let i = 0; i < this.particles.length; i++ ){
       this.particles[i].update()
     }
