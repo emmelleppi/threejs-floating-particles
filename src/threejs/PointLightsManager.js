@@ -1,54 +1,46 @@
-import React from 'react'
-import * as THREE from "three"
+import { useState, useEffect } from 'react'
 
 import PointLight from "./PointLight";
-import { SCALE_PARTICLES_VELOCITY } from "./utility/constants"
 
-const deafultState = {
-  scaleFactor: new THREE.Vector3(1,1,1),
-  scaleVelocity: SCALE_PARTICLES_VELOCITY,
-  colors: [],
-  intensity: 1,
-  radius: 1000,
-  zFlat: false,
+const PointLightsManager = props  => {
+  const {
+    colors,
+    intensity,
+    radius,
+    zFlat,
+    scene,
+    addInUpdateProcess,
+    fakeCamera,
+  } = props
+  
+  const [ lights, setLights ] = useState([])
+  useEffect(() => {
+    const lightsArray = colors.map(color => new PointLight({
+      zFlat,
+      radius,
+      intensity,
+      color: color,
+      fakeCamera,  
+    }))
+    lightsArray.forEach(light => scene.add(light.pointLight))
+    setLights(lightsArray)
+    
+    return () => {
+      // Clean up TODO
+    }
+  },[])
+
+  addInUpdateProcess({
+    fn: () => update(lights),
+    id: 'point-lights-update',
+  })
+
+  return null
 }
 
-class PointLightsManager extends React.Component {
-  constructor(props){
-    super(props)
-    const { scaleFactor, colors, intensity, radius, zFlat, frustum, camera } = props
-    this.state = {
-      ...deafultState,
-      scaleFactor,
-      intensity,
-      radius,
-      zFlat,
-    }
-    this.colors = colors || []
-    this.lights = []
-    this.camera = camera
-    this.frustum = frustum
-
-    this.update = this.update.bind(this)
-  }
-
-  componentDidMount(){
-    for(let i = 0; i < this.colors.length; i++){
-      const pointLight =  new PointLight({ ...this.state, color: this.colors[i], camera: this.camera, frustum: this.frustum  })
-      this.lights.push(pointLight)
-      this.props.scene.add(pointLight.pointLight)
-    }
-    this.props.addInUpdateProcess(this.update)
-  }
-
-  update(){
-    for(let i = 0; i < this.lights.length; i++ ){
-      this.lights[i].update(true)
-    }
-  }
-
-  render(){
-    return null
+const update = lights => {    
+  for(let i = 0; i < lights.length; i++ ){
+    lights[i].update()
   }
 }
 

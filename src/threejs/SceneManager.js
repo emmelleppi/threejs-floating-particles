@@ -50,6 +50,7 @@ class SceneManager extends React.Component {
     this.initRaycaster = this.initRaycaster.bind(this)
     this.getIntersectedObject = this.getIntersectedObject.bind(this)
     this.onWindowResize = this.onWindowResize.bind(this)
+    this.removeInUpdateProcess = this.removeInUpdateProcess.bind(this)
   }
 
   componentDidMount() {    
@@ -59,8 +60,11 @@ class SceneManager extends React.Component {
     this.createBackgroundWall()
     this.initRaycaster()
 
-    this.addInUpdateProcess(() => {
-      this.renderer.render(this.scene, this.camera)
+    this.addInUpdateProcess({
+      fn: () => {
+        this.renderer.render(this.scene, this.camera)
+      },
+      id: 'render'
     })
     this.containerHandler.on('resize', this.onWindowResize)
 
@@ -199,13 +203,17 @@ class SceneManager extends React.Component {
   update() {               
     requestAnimationFrame(this.update, false)
     for(let i=0; i<this.renderProcess.length; i++){
-      this.renderProcess[i]()
+      this.renderProcess[i].fn()
     }
   }
 
-  addInUpdateProcess(fn){
-    this.renderProcess.push(fn)
+  addInUpdateProcess({ fn, id }){
+    this.renderProcess.push({ fn, id })    
   }
+
+  removeInUpdateProcess(id){    
+    this.renderProcess = this.renderProcess.filter(item => item.id!==id)
+  } 
 
   render(){  
     const { container } = this.props
@@ -224,6 +232,7 @@ class SceneManager extends React.Component {
             eventsHandler: this.eventsHandler,
             containerHandler: this.containerHandler,
             addInUpdateProcess: this.addInUpdateProcess,
+            removeInUpdateProcess: this.removeInUpdateProcess,
             camera: this.camera,
             fakeCamera: this.fakeCamera,
             frustum: this.frustum,

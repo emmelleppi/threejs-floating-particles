@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 
 export const CONTAINER_DEPTH = 1000
-export const NUM_OF_PARTICLES = 1000
-export const SCALE_PARTICLES_VELOCITY = 0.0003
-export const SCALE_POINT_LIGHT_VELOCITY = 0.001
+export const NUM_OF_PARTICLES = 1
+export const SCALE_PARTICLES_VELOCITY = 0.03
+export const SCALE_POINT_LIGHT_VELOCITY = 0.01
 export const MAX_NUMBER_OF_OPEN_PARICLES = 3
 
 export const TRANSFORMATION_MATRICES = {
